@@ -73,7 +73,7 @@ def create_ingredient_extractor_agent():
         model=MODEL_NAME,
         tools=[],
         system_prompt=SYSTEM_PROMPT_INGREDIENT_EXTRACTOR,
-        checkpointer=InMemorySaver(),
+        # checkpointer=InMemorySaver(),
         response_format=IngredientExtractorOutput
     )
 
@@ -87,15 +87,17 @@ def create_recipe_creator_agent():
         model=MODEL_NAME,
         tools=[web_search],
         system_prompt=SYSTEM_PROMPT_RECIPE_CREATOR,
-        checkpointer=InMemorySaver(),
+        # checkpointer=InMemorySaver(),
         response_format=RecipeCreatorOutput
     )
 
 
+ingredient_agent = create_ingredient_extractor_agent()
+
 def extract_ingredients_from_image(image_path: Path) -> Dict[str, list[str]]:
     """Use the ingredient extractor agent to extract ingredients from an image."""
     img_b64 = load_image_as_base64(image_path)
-    agent = create_ingredient_extractor_agent()
+    agent = ingredient_agent
     config = {"configurable": {"thread_id": "1"}}
 
     message = build_multimodal_message(
@@ -106,10 +108,11 @@ def extract_ingredients_from_image(image_path: Path) -> Dict[str, list[str]]:
     response = agent.invoke({"messages": [message]}, config)
     return response["messages"][-1].content
 
+recipe_agent = create_recipe_creator_agent()
 
 def find_recipes(ingredient_list: str) -> str:
     """Run the recipe creator agent to find recipes matching the given ingredients."""
-    agent = create_recipe_creator_agent()
+    agent = recipe_agent
     config = {"configurable": {"thread_id": "2"}}
 
     message = HumanMessage(
